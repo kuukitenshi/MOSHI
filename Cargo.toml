@@ -1,0 +1,13 @@
+[workspace]
+members = [
+    "shared",
+    "mock_app",
+    "mock_idp",
+    "ab",
+    "ib",
+    "tts",
+    "web_ui",
+    "demo_app",
+    "bench_frost",
+]
+resolver = "2"

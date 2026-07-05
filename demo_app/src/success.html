@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Authentication Successful</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f1117; color: #e4e6ef; margin: 0; padding: 2rem; line-height: 1.6; }
+  .container { max-width: 720px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid #2a2d3e; }
+  header h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+  header p { color: #8b8fa3; font-size: 0.9rem; }
+  .success-banner { background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.3); border-radius: 10px; padding: 1rem; text-align: center; color: #34d399; font-weight: 600; font-size: 0.9rem; margin-bottom: 1.5rem; }
+  .user-card { background: #1a1d2e; border: 1px solid #2a2d3e; border-radius: 12px; padding: 1.5rem; display: flex; align-items: center; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+  .user-info h3 { font-size: 1.1rem; margin-bottom: 0.1rem; }
+  .user-info p { color: #8b8fa3; font-size: 0.85rem; }
+  .card { background: #1a1d2e; border: 1px solid #2a2d3e; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+  .card h4 { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.6rem; }
+  .jwt-display { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.7rem; background: #12141f; border: 1px solid #2a2d3e; border-radius: 8px; padding: 0.7rem; word-break: break-all; line-height: 1.5; max-height: 120px; overflow-y: auto; }
+  .claims-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; margin-top: 0.5rem; }
+  .claims-table th { text-align: left; padding: 0.35rem 0.5rem; border-bottom: 2px solid #2a2d3e; font-weight: 600; font-size: 0.7rem; text-transform: uppercase; color: #8b8fa3; }
+  .claims-table td { padding: 0.35rem 0.5rem; border-bottom: 1px solid #2a2d3e; font-family: 'SF Mono', monospace; font-size: 0.72rem; }
+  .claims-table td:first-child { color: #60a5fa; font-weight: 600; }
+  .payload-json { font-family: 'SF Mono', monospace; font-size: 0.72rem; background: #12141f; border: 1px solid #2a2d3e; border-radius: 8px; padding: 0.7rem; white-space: pre-wrap; line-height: 1.5; max-height: 200px; overflow-y: auto; }
+  .badge { display: inline-block; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; padding: 0.2em 0.6em; border-radius: 4px; }
+  .badge-google { background: rgba(96,165,250,0.1); color: #60a5fa; border: 1px solid rgba(96,165,250,0.25); }
+  .badge-frost { background: rgba(167,139,250,0.1); color: #a78bfa; border: 1px solid rgba(167,139,250,0.25); }
+  .badge-nonce-ok { background: rgba(52,211,153,0.1); color: #34d399; border: 1px solid rgba(52,211,153,0.25); }
+  .badge-nonce-fail { background: rgba(248,113,113,0.1); color: #f87171; border: 1px solid rgba(248,113,113,0.25); }
+  .privacy-card { background: rgba(52,211,153,0.06); border: 1px solid rgba(52,211,153,0.2); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; font-size: 0.8rem; }
+  .privacy-card h4 { color: #34d399; margin-bottom: 0.5rem; }
+  .privacy-card ul { padding-left: 1.2rem; margin: 0; }
+  .privacy-card li { margin: 0.2rem 0; color: #c0c4d0; }
+  .privacy-card strong { color: #34d399; }
+  .privacy-card code { background: rgba(96,165,250,0.1); padding: 0.1em 0.35em; border-radius: 3px; font-family: 'SF Mono', monospace; font-size: 0.75rem; color: #22d3ee; }
+  a { color: #60a5fa; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  footer { text-align: center; padding: 1.5rem 0; color: #8b8fa3; font-size: 0.72rem; border-top: 1px solid #2a2d3e; margin-top: 1rem; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>Demo Relying Party</h1>
+    <p>Authentication result from the moshi identity broker</p>
+    <div style="margin-top:0.5rem;">
+      <span class="badge badge-google">Google OIDC</span>
+      <span class="badge badge-frost">FROST Threshold Signature</span>
+      <span class="badge {{NONCE_BADGE_CLASS}}">Nonce: {{NONCE_STATUS}}</span>
+    </div>
+  </header>
+
+  <div class="success-banner">
+    Authentication successful: OIDC Code Flow + PKCE completed via Google
+  </div>
+
+  <div class="user-card">
+    {{AVATAR_HTML}}
+    <div class="user-info">
+      <h3>{{NAME_DISPLAY}}</h3>
+      <p>{{EMAIL_DISPLAY}}</p>
+      <p style="font-family:monospace;font-size:0.7rem;color:#6b7280;margin-top:0.2rem;">DI: {{SUB_DISPLAY}}</p>
+    </div>
+  </div>
+
+  <div class="privacy-card">
+    <h4>Privacy Guarantees (by design)</h4>
+    <ul>
+      <li><strong>AB</strong> saw <code>client_id</code> (app_id) but <strong>never</strong> saw your Google identity (iss, sub)</li>
+      <li><strong>IB</strong> saw your Google identity but <strong>never</strong> saw the app_id</li>
+      <li><strong>tTS</strong> only saw blinded (hashed) values: signed with FROST threshold signatures</li>
+      <li>The <code>sub</code> in the JWT is a <strong>Direct Identifier (DI)</strong>: unique per user+app, unlinkable across apps</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h4>ID Token (JWT)</h4>
+    <div class="jwt-display">{{JWT_HTML}}</div>
+  </div>
+
+  <div class="card">
+    <h4>Decoded Claims</h4>
+    <table class="claims-table">
+      <thead><tr><th>Claim</th><th>Value</th><th>Role</th></tr></thead>
+      <tbody>{{CLAIMS_HTML}}</tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h4>Raw Payload</h4>
+    <div class="payload-json">{{PAYLOAD_JSON}}</div>
+  </div>
+
+  <p style="text-align:center;margin-top:1.5rem;"><a href="/">Sign in again</a></p>
+
+  <footer>
+    Demo relying party for the moshi proof of concept. Google OIDC + FROST
+  </footer>
+
+</div>
+</body>
+</html>

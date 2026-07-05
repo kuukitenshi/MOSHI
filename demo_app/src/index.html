@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demo App: MOSHI</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0f1117;
+    --bg-card:   #1a1d2e;
+    --border:    #2a2d3e;
+    --text:      #e4e6ef;
+    --text-dim:  #8b8fa3;
+    --accent:    #c0c0c0;
+    --hello-bg:  #3a3d4e;
+    --hello-hover: #4a4d5e;
+    --green:     #34d399;
+    --green-bg:  rgba(52, 211, 153, 0.1);
+    --red:       #f87171;
+    --red-bg:    rgba(248, 113, 113, 0.1);
+    --blue:      #60a5fa;
+    --blue-bg:   rgba(96, 165, 250, 0.1);
+    --purple:    #a78bfa;
+    --purple-bg: rgba(167, 139, 250, 0.1);
+    --orange:    #fbbf24;
+    --cyan:      #22d3ee;
+    --google-blue: #4285f4;
+    --google-hover: #5a9aff;
+    --mono:      'SF Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+    --sans:      'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  .container { max-width: 720px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+  /* -- Header -------------------------------------------------- */
+  header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+  }
+  header p { color: var(--text-dim); font-size: 0.9rem; }
+  .badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.2em 0.6em;
+    border-radius: 4px;
+    margin-top: 0.5rem;
+  }
+  .badge-oidc { background: var(--blue-bg); color: var(--blue); border: 1px solid rgba(96,165,250,0.25); }
+  .badge-pkce { background: var(--purple-bg); color: var(--purple); border: 1px solid rgba(167,139,250,0.25); }
+  .badge-google { background: rgba(251,191,36,0.1); color: var(--orange); border: 1px solid rgba(251,191,36,0.25); }
+
+  /* -- Sign In Card -------------------------------------------- */
+  .signin-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2.5rem 2rem;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    margin-bottom: 1.5rem;
+  }
+  .signin-card h2 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+  .signin-card .subtitle {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    margin-bottom: 1.5rem;
+  }
+
+  /* -- Google Button ------------------------------------------- */
+  .google-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    background: var(--google-blue);
+    color: #ffffff;
+    border: none;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 0.85rem 2rem;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+    font-family: var(--sans);
+    min-width: 280px;
+    box-shadow: 0 2px 8px rgba(66,133,244,0.4);
+    text-decoration: none;
+  }
+  .google-btn:hover {
+    background: var(--google-hover);
+    box-shadow: 0 4px 16px rgba(66,133,244,0.5);
+  }
+  .google-btn:active { transform: scale(0.98); }
+
+  .google-icon {
+    width: 24px;
+    height: 24px;
+    background: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .google-icon svg { width: 16px; height: 16px; }
+
+  .github-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    background: #1f2937;
+    color: #ffffff;
+    border: 1px solid #374151;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 0.85rem 2rem;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, transform 0.1s, box-shadow 0.2s;
+    font-family: var(--sans);
+    min-width: 280px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    text-decoration: none;
+    margin-top: 0.75rem;
+  }
+  .github-btn:hover {
+    background: #111827;
+    border-color: #4b5563;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  }
+  .github-btn:active { transform: scale(0.98); }
+
+  .github-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .github-icon svg { width: 16px; height: 16px; }
+
+  .discord-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    background: #5865f2;
+    color: #ffffff;
+    border: none;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 0.85rem 2rem;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+    font-family: var(--sans);
+    min-width: 280px;
+    box-shadow: 0 2px 8px rgba(88,101,242,0.4);
+    text-decoration: none;
+    margin-top: 0.75rem;
+  }
+  .discord-btn:hover {
+    background: #4752c4;
+    box-shadow: 0 4px 16px rgba(88,101,242,0.5);
+  }
+  .discord-btn:active { transform: scale(0.98); }
+
+  .discord-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .discord-icon svg { width: 16px; height: 16px; }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    margin: 1.5rem 0;
+    color: var(--text-dim);
+    font-size: 0.75rem;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid var(--border);
+  }
+  .divider span { padding: 0 1rem; }
+
+  /* -- Hello Button (legacy/mock) ------------------------------ */
+  .hello-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    background: var(--hello-bg);
+    color: #ffffff;
+    border: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 0.7rem 1.5rem;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+    font-family: var(--sans);
+    min-width: 240px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  .hello-btn:hover {
+    background: var(--hello-hover);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+  }
+  .hello-btn:active { transform: scale(0.98); }
+  .hello-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .hello-logo {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff);
+    flex-shrink: 0;
+  }
+
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .signin-note {
+    margin-top: 1rem;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+  }
+  .signin-note code {
+    background: rgba(96,165,250,0.1);
+    padding: 0.1em 0.35em;
+    border-radius: 3px;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+  }
+
+  /* -- Error --------------------------------------------------- */
+  .error-box {
+    background: var(--red-bg);
+    border: 1px solid rgba(248,113,113,0.3);
+    border-radius: 10px;
+    padding: 1rem;
+    color: var(--red);
+    font-size: 0.85rem;
+    display: none;
+    margin-bottom: 1.5rem;
+    text-align: left;
+  }
+  .error-box.show { display: block; }
+
+  /* -- Flow Steps ---------------------------------------------- */
+  .flow-section {
+    display: none;
+    margin-bottom: 1.5rem;
+  }
+  .flow-section.show { display: block; }
+
+  .flow-section h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .flow-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .flow-step {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    opacity: 0;
+    transform: translateX(-8px);
+    transition: opacity 0.3s, transform 0.3s;
+  }
+  .flow-step:last-child { border-bottom: none; }
+  .flow-step.visible { opacity: 1; transform: translateX(0); }
+  .flow-step.highlight { background: var(--green-bg); }
+
+  .step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--blue-bg);
+    color: var(--blue);
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-right: 0.5rem;
+    flex-shrink: 0;
+  }
+  .step-num.done { background: var(--green-bg); color: var(--green); }
+
+  .step-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.2rem;
+  }
+  .step-actor {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--purple);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .step-action {
+    font-size: 0.82rem;
+    font-weight: 500;
+    margin-left: 1.9rem;
+  }
+  .step-detail {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    margin-left: 1.9rem;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  /* -- Result Section ------------------------------------------ */
+  .result-section {
+    display: none;
+    margin-bottom: 1.5rem;
+  }
+  .result-section.show { display: block; }
+
+  .result-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .result-card h4 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .result-card h4 .icon { font-size: 1rem; }
+
+  .jwt-display {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    background: #12141f;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.7rem;
+    word-break: break-all;
+    line-height: 1.5;
+    max-height: 120px;
+    overflow-y: auto;
+  }
+  .jwt-header  { color: #f87171; }
+  .jwt-payload { color: #34d399; }
+  .jwt-sig     { color: #a78bfa; }
+
+  .payload-json {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    background: #12141f;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.7rem;
+    white-space: pre-wrap;
+    line-height: 1.5;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .claims-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+    margin-top: 0.5rem;
+  }
+  .claims-table th {
+    text-align: left;
+    padding: 0.35rem 0.5rem;
+    border-bottom: 2px solid var(--border);
+    font-weight: 600;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .claims-table td {
+    padding: 0.35rem 0.5rem;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+  }
+  .claims-table td:first-child { color: var(--blue); font-weight: 600; }
+  .claims-table .oidc-claim { background: rgba(96,165,250,0.08); }
+
+  /* -- Success Banner ------------------------------------------ */
+  .success-banner {
+    background: var(--green-bg);
+    border: 1px solid rgba(52,211,153,0.3);
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+    color: var(--green);
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    display: none;
+  }
+  .success-banner.show { display: block; }
+
+  /* -- How It Works (collapsible) ------------------------------ */
+  .info-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+  }
+  .info-toggle {
+    width: 100%;
+    background: none;
+    border: none;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.8rem 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-align: left;
+  }
+  .info-toggle:hover { background: rgba(255,255,255,0.03); }
+  .info-toggle .chevron {
+    font-size: 0.65rem;
+    transition: transform 0.25s;
+    color: var(--text-dim);
+  }
+  .info-toggle.open .chevron { transform: rotate(90deg); }
+  .info-content {
+    display: none;
+    padding: 0 1rem 1rem 1rem;
+    font-size: 0.8rem;
+    line-height: 1.6;
+    color: var(--text-dim);
+  }
+  .info-content.open { display: block; }
+  .info-content strong { color: var(--text); }
+  .info-content code {
+    background: rgba(96,165,250,0.1);
+    padding: 0.1em 0.35em;
+    border-radius: 3px;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--cyan);
+  }
+  .info-content ul { padding-left: 1.2rem; margin: 0.4rem 0; }
+  .info-content li { margin: 0.2rem 0; }
+  .info-content .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.6rem 0;
+    font-size: 0.75rem;
+  }
+  .compare-table th {
+    text-align: left;
+    padding: 0.35rem 0.5rem;
+    border-bottom: 2px solid var(--border);
+    font-weight: 600;
+    color: var(--text);
+  }
+  .compare-table td {
+    padding: 0.35rem 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  footer {
+    text-align: center;
+    padding: 1.5rem 0;
+    color: var(--text-dim);
+    font-size: 0.72rem;
+    border-top: 1px solid var(--border);
+    margin-top: 1rem;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>Demo Relying Party</h1>
+    <p>Example application integrating with the MOSHI identity broker</p>
+    <div>
+      <span class="badge badge-oidc">OIDC Authorization Code Flow</span>
+      <span class="badge badge-pkce">PKCE (S256)</span>
+      <span class="badge badge-google">Multiple IdPs</span>
+    </div>
+  </header>
+
+  <!-- -- Sign In ------------------------------------------------ -->
+  <div class="signin-card" id="signinCard">
+    <h2>Welcome</h2>
+    <p class="subtitle">Sign in with any supported identity provider</p>
+
+    <!-- Primary: Google redirect flow (real authentication) -->
+    <a class="google-btn" href="/auth/start?provider=google">
+      <span class="google-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+      </span>
+      Sign in with Google
+    </a>
+
+    <p class="signin-note" style="margin-top:0.75rem;">
+      Use your Google account to authenticate
+    </p>
+
+    <!-- GitHub button -->
+    <a class="github-btn" href="/auth/start?provider=github">
+      <span class="github-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.6.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v 3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+        </svg>
+      </span>
+      Sign in with GitHub
+    </a>
+
+    <p class="signin-note" style="margin-top:0.5rem;">
+      Use your GitHub account to authenticate
+    </p>
+
+    <!-- Discord button -->
+    <a class="discord-btn" href="/auth/start?provider=discord">
+      <span class="discord-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+          <path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.211.375-.444.865-.607 1.251a18.27 18.27 0 00-5.487 0c-.163-.386-.395-.876-.607-1.251a.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.042-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.294.075.075 0 01.088-.01c3.928 1.793 8.18 1.793 12.062 0a.075.075 0 01.088.011c.12.098.246.198.373.294a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.076.076 0 00-.041.107c.352.699.764 1.364 1.225 1.994a.077.077 0 00.084.028 19.839 19.839 0 006.002-3.030.076.076 0 00.032-.056c.5-4.506.278-8.429-.952-12.602a.075.075 0 00-.032-.03zM8.02 15.33c-1.183 0-2.157-.965-2.157-2.156 0-1.193.93-2.157 2.157-2.157 1.226 0 2.157.964 2.157 2.157 0 1.19-.93 2.155-2.157 2.155zm7.975 0c-1.183 0-2.157-.965-2.157-2.156 0-1.193.93-2.157 2.157-2.157 1.226 0 2.157.964 2.157 2.157 0 1.19-.931 2.155-2.157 2.155z"/>
+        </svg>
+      </span>
+      Sign in with Discord
+    </a>
+
+    <p class="signin-note" style="margin-top:0.5rem;">
+      Use your Discord account to authenticate
+    </p>
+
+    <div class="divider"><span>or use mock IdP (legacy)</span></div>
+
+    <!-- Secondary: Mock IdP flow (proxied, no browser redirect) -->
+    <button class="hello-btn" id="helloBtn" onclick="doSignIn()">
+      <span class="spinner" id="spinner"></span>
+      <span class="hello-logo"></span>
+      Continue with Mock IdP
+    </button>
+
+    <p class="signin-note">
+      Uses <code>client_id = "demo_app_hello"</code> &middot;
+      Mock IdP on <code>localhost:3001</code>
+    </p>
+  </div>
+
+  <!-- -- Error -------------------------------------------------- -->
+  <div class="error-box" id="errorBox"></div>
+
+  <!-- -- Success Banner ----------------------------------------- -->
+  <div class="success-banner" id="successBanner">
+    Authentication successful: OIDC Code Flow + PKCE completed
+  </div>
+
+  <!-- -- Flow Steps --------------------------------------------- -->
+  <section class="flow-section" id="flowSection">
+    <h3>OIDC Code Flow + PKCE, step by step</h3>
+    <div class="flow-card" id="flowCard"></div>
+  </section>
+
+  <!-- -- Result ------------------------------------------------- -->
+  <section class="result-section" id="resultSection">
+    <div class="result-card">
+      <h4><span class="icon">&#128274;</span> ID Token (JWT)</h4>
+      <div class="jwt-display" id="jwtDisplay"></div>
+    </div>
+
+    <div class="result-card">
+      <h4><span class="icon">&#128100;</span> Decoded Claims</h4>
+      <table class="claims-table" id="claimsTable">
+        <thead><tr><th>Claim</th><th>Value</th><th>Role</th></tr></thead>
+        <tbody id="claimsBody"></tbody>
+      </table>
+    </div>
+
+    <div class="result-card">
+      <h4><span class="icon">&#128196;</span> Raw Payload</h4>
+      <div class="payload-json" id="payloadDisplay"></div>
+    </div>
+  </section>
+
+  <!-- -- How It Works ------------------------------------------- -->
+  <div class="info-card">
+    <button class="info-toggle" onclick="toggleInfo(this)">
+      How does the Google (real IdP) sign-in flow work?
+      <span class="chevron">&#9654;</span>
+    </button>
+    <div class="info-content">
+      <p>When you click "Sign in with Google", a <strong>chain of browser redirects</strong> runs through the partitioned architecture:</p>
+      <ol style="padding-left:1.2rem;margin:0.6rem 0;">
+        <li><strong>Demo App</strong> generates PKCE params, redirects to <strong>AB</strong> (HTTP :4010)</li>
+        <li><strong>AB</strong> blinds <code>app_id</code> via PRF, redirects to <strong>IB</strong> (HTTP :4020)</li>
+        <li><strong>IB</strong> redirects to <strong>Google</strong> for real authentication</li>
+        <li>User authenticates with Google, Google redirects back to <strong>IB</strong></li>
+        <li><strong>IB</strong> exchanges Google code, extracts <code>iss</code>/<code>sub</code>, blinds them, calls <strong>tTS</strong></li>
+        <li><strong>tTS</strong> computes DI, signs JWT with <strong>FROST threshold signature</strong></li>
+        <li><strong>IB</strong> stores JWT in relay, redirects to <strong>AB</strong></li>
+        <li><strong>AB</strong> fetches JWT from relay, generates authorization code, redirects to <strong>Demo App</strong></li>
+        <li><strong>Demo App</strong> exchanges code for JWT at AB's <code>/token</code> endpoint (with PKCE verification)</li>
+      </ol>
+      <p style="margin-top:0.6rem;">At no point does any single component see the full tuple <code>(app_id, iss, sub)</code>.</p>
+    </div>
+  </div>
+
+  <div class="info-card">
+    <button class="info-toggle" onclick="toggleInfo(this)">
+      What happens behind the scenes? (Privacy architecture)
+      <span class="chevron">&#9654;</span>
+    </button>
+    <div class="info-content">
+      <p>The broker runs a <strong>partitioned flow</strong> where no single component ever sees the full identity tuple <code>(app_id, iss, sub)</code>:</p>
+      <ul>
+        <li><strong>AB</strong> sees <code>client_id</code> (= app_id) but <strong>never</strong> sees <code>iss</code> or <code>sub</code></li>
+        <li><strong>IB</strong> contacts Google and sees <code>iss</code> + <code>sub</code> but <strong>never</strong> sees <code>app_id</code></li>
+        <li><strong>tTS</strong> only sees blinded (hashed) values: computes a Direct Identifier (DI) and signs with <strong>FROST threshold signatures</strong></li>
+      </ul>
+      <p>The <code>sub</code> claim in the JWT is the DI: a deterministic, app-specific, unlinkable pseudonym. The same user gets a different DI for each app.</p>
+      <p>The JWT is signed by a <strong>FROST quorum</strong> (t=2 of n=3 signers), not a single key. No single signer holds the full signing key.</p>
+    </div>
+  </div>
+
+  <div class="info-card">
+    <button class="info-toggle" onclick="toggleInfo(this)">
+      How would I integrate this in my own app?
+      <span class="chevron">&#9654;</span>
+    </button>
+    <div class="info-content">
+      <p>Integrating with moshi works <strong>exactly like integrating with any OIDC provider</strong> (Google, Hello, Auth0, etc.). The only difference is the issuer URL.</p>
+
+      <p><strong>If you use an OIDC library</strong> (recommended):</p>
+      <ul>
+        <li>Set <code>issuer</code> to your broker's URL (e.g. <code>https://localhost:4001</code>)</li>
+        <li>Set <code>client_id</code> to your app's identifier</li>
+        <li>The library auto-discovers all endpoints via <code>/.well-known/openid-configuration</code></li>
+        <li>Everything else (PKCE, nonce, state, token exchange) is handled automatically</li>
+      </ul>
+
+      <p style="margin-top:0.6rem"><strong>Comparison: Hello vs Partitioned Broker</strong></p>
+      <table class="compare-table">
+        <tr><th></th><th>Hello</th><th>This Broker</th></tr>
+        <tr><td>Issuer</td><td><code>https://issuer.hello.coop</code></td><td><code>https://localhost:4001</code></td></tr>
+        <tr><td>Auth endpoint</td><td><code>/authorize</code></td><td><code>/authorize</code></td></tr>
+        <tr><td>Token endpoint</td><td><code>/oauth/token</code></td><td><code>/token</code></td></tr>
+        <tr><td>JWKS</td><td><code>/.well-known/jwks</code></td><td><code>/jwks.json</code></td></tr>
+        <tr><td>Algorithm</td><td>RS256</td><td>EdDSA (FROST)</td></tr>
+        <tr><td>Flow</td><td>Code + PKCE</td><td>Code + PKCE</td></tr>
+        <tr><td>Discovery</td><td><code>/.well-known/openid-configuration</code></td><td><code>/.well-known/openid-configuration</code></td></tr>
+        <tr><td>Real IdP</td><td>Multi (Google, GitHub, etc.)</td><td>Google (PoC)</td></tr>
+        <tr><td>Change needed</td><td colspan="2" style="color:var(--green);font-weight:600;text-align:center;">Only the issuer URL</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <footer>
+    Demo relying party for the MOSHI PoC (OIDC Code Flow + PKCE + FROST)
+  </footer>
+
+</div>
+
+<script>
+// -- State --------------------------------------------------------
+let running = false;
+
+// -- DOM refs -----------------------------------------------------
+const helloBtn      = document.getElementById('helloBtn');
+const spinner       = document.getElementById('spinner');
+const signinCard    = document.getElementById('signinCard');
+const errorBox      = document.getElementById('errorBox');
+const successBanner = document.getElementById('successBanner');
+const flowSection   = document.getElementById('flowSection');
+const flowCard      = document.getElementById('flowCard');
+const resultSection = document.getElementById('resultSection');
+const jwtDisplay    = document.getElementById('jwtDisplay');
+const claimsBody    = document.getElementById('claimsBody');
+const payloadDisplay = document.getElementById('payloadDisplay');
+
+// -- Helpers ------------------------------------------------------
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function showError(msg) {
+  errorBox.textContent = msg;
+  errorBox.classList.add('show');
+}
+function hideError() {
+  errorBox.classList.remove('show');
+}
+
+function toggleInfo(btn) {
+  btn.classList.toggle('open');
+  btn.nextElementSibling.classList.toggle('open');
+}
+
+const CLAIM_ROLES = {
+  sub:            'Direct Identifier (DI): unique per user+app',
+  iss:            'Issuer: token creator',
+  aud:            'Audience: the app this token is for (= blinded app_id, not the plaintext client_id)',
+  nonce:          'OIDC replay protection',
+  jti:            'Unique token identifier',
+  iat:            'Issued at (Unix timestamp)',
+  exp:            'Expiration (Unix timestamp)',
+  name:           'User display name (from IdP)',
+  email:          'User email address (from IdP)',
+  email_verified: 'Email verified by IdP',
+  picture:        'Profile picture URL (from IdP)',
+};
+const OIDC_CLAIMS = new Set(['aud', 'nonce', 'jti']);
+const PROFILE_CLAIMS = new Set(['name', 'email', 'email_verified', 'picture']);
+
+// -- Legacy Sign In (Mock IdP) ------------------------------------
+async function doSignIn() {
+  if (running) return;
+  running = true;
+
+  // Reset UI
+  hideError();
+  successBanner.classList.remove('show');
+  flowSection.classList.remove('show');
+  resultSection.classList.remove('show');
+  flowCard.innerHTML = '';
+  helloBtn.disabled = true;
+  spinner.style.display = 'inline-block';
+
+  try {
+    const resp = await fetch('/api/sign-in', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ client_id: 'demo_app_hello' }),
+    });
+
+    const data = await resp.json();
+
+    // Show flow steps with animation
+    if (data.steps && data.steps.length > 0) {
+      flowSection.classList.add('show');
+      for (let i = 0; i < data.steps.length; i++) {
+        const step = data.steps[i];
+        const div = document.createElement('div');
+        div.className = 'flow-step';
+        const isLast = i === data.steps.length - 1;
+        if (isLast && data.success) div.className += ' highlight';
+        div.innerHTML = `
+          <div class="step-header">
+            <span class="step-num ${data.success && i < data.steps.length ? 'done' : ''}">${step.number}</span>
+            <span class="step-actor">${step.actor}</span>
+          </div>
+          <div class="step-action">${step.action}</div>
+          <div class="step-detail">${step.detail}</div>
+        `;
+        flowCard.appendChild(div);
+        await sleep(200);
+        div.classList.add('visible');
+      }
+    }
+
+    if (!data.success) {
+      showError(data.error || 'Authentication failed');
+      return;
+    }
+
+    // Show success
+    await sleep(300);
+    successBanner.classList.add('show');
+
+    // Show JWT
+    await sleep(200);
+    resultSection.classList.add('show');
+
+    // Color-coded JWT
+    const parts = data.id_token.split('.');
+    if (parts.length === 3) {
+      jwtDisplay.innerHTML =
+        '<span class="jwt-header">' + parts[0] + '</span>.' +
+        '<span class="jwt-payload">' + parts[1] + '</span>.' +
+        '<span class="jwt-sig">' + parts[2] + '</span>';
+    } else {
+      jwtDisplay.textContent = data.id_token;
+    }
+
+    // Claims table
+    if (data.payload) {
+      const ordered = ['sub', 'iss', 'aud', 'name', 'email', 'email_verified', 'picture', 'nonce', 'jti', 'iat', 'exp'];
+      const shown = new Set();
+
+      ordered.forEach(key => {
+        if (data.payload[key] !== undefined) {
+          addClaim(key, data.payload[key]);
+          shown.add(key);
+        }
+      });
+      Object.keys(data.payload).forEach(key => {
+        if (!shown.has(key)) addClaim(key, data.payload[key]);
+      });
+
+      // Raw payload
+      payloadDisplay.textContent = JSON.stringify(data.payload, null, 2);
+    }
+
+  } catch (err) {
+    showError('Network error: ' + err.message);
+  } finally {
+    running = false;
+    helloBtn.disabled = false;
+    spinner.style.display = 'none';
+  }
+}
+
+function addClaim(key, value) {
+  const tr = document.createElement('tr');
+  if (OIDC_CLAIMS.has(key)) tr.className = 'oidc-claim';
+  if (PROFILE_CLAIMS.has(key)) tr.style.background = 'rgba(167,139,250,0.08)';
+
+  let displayVal = value;
+  if ((key === 'iat' || key === 'exp') && typeof value === 'number') {
+    displayVal = value + '  (' + new Date(value * 1000).toISOString() + ')';
+  }
+  if (typeof displayVal === 'string' && displayVal.length > 64) {
+    displayVal = displayVal.substring(0, 64) + '...';
+  }
+
+  const role = CLAIM_ROLES[key] || '';
+  const oidcTag = OIDC_CLAIMS.has(key) ? ' <span style="color:var(--blue);font-size:0.65rem;">[OIDC]</span>' : '';
+  const profileTag = PROFILE_CLAIMS.has(key) ? ' <span style="color:var(--purple);font-size:0.65rem;">[Profile]</span>' : '';
+
+  tr.innerHTML =
+    '<td>' + key + oidcTag + profileTag + '</td>' +
+    '<td>' + displayVal + '</td>' +
+    '<td style="font-family:var(--sans);color:var(--text-dim);">' + role + '</td>';
+  claimsBody.appendChild(tr);
+}
+</script>
+</body>
+</html>

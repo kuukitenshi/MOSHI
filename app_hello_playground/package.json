@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "dev": "next dev"
+  },
+  "dependencies": {
+    "@hellocoop/express": "^1.19.12",
+    "@hellocoop/nextjs": "^3.3.16"
+  }
+}

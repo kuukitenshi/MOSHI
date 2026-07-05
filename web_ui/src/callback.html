@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MOSHI PoC: OIDC Callback</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0f1117;
+    --bg-card:   #181b23;
+    --bg-card2:  #1e2230;
+    --border:    #2a2f3e;
+    --text:      #e0e4f0;
+    --text-dim:  #8890a4;
+    --accent:    #6c8cff;
+    --accent2:   #a78bfa;
+    --green:     #34d399;
+    --red:       #f87171;
+    --orange:    #fbbf24;
+    --cyan:      #22d3ee;
+    --mono:      'SF Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+    --sans:      'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  .container { max-width: 800px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+  header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.25rem;
+  }
+  header h1 span { color: var(--accent); }
+  header p { color: var(--text-dim); font-size: 0.9rem; }
+
+  .badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.2em 0.65em;
+    border-radius: 4px;
+    margin-top: 0.5rem;
+  }
+  .badge-oidc { background: rgba(108,140,255,0.15); color: var(--accent); border: 1px solid rgba(108,140,255,0.3); }
+
+  /* ── Status ─────────────────────────────────────────────────── */
+  .status-box {
+    text-align: center;
+    padding: 1.2rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  .status-success {
+    background: rgba(52,211,153,0.08);
+    border: 1px solid rgba(52,211,153,0.3);
+    color: var(--green);
+  }
+  .status-error {
+    background: rgba(248,113,113,0.08);
+    border: 1px solid rgba(248,113,113,0.3);
+    color: var(--red);
+  }
+  .status-waiting {
+    background: rgba(108,140,255,0.08);
+    border: 1px solid rgba(108,140,255,0.3);
+    color: var(--accent);
+  }
+
+  /* ── Cards ──────────────────────────────────────────────────── */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .card h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .card h3 .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .dot-blue   { background: var(--accent); }
+  .dot-green  { background: var(--green); }
+  .dot-purple { background: var(--accent2); }
+
+  /* ── JWT display ────────────────────────────────────────────── */
+  .jwt-display {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.8rem;
+    word-break: break-all;
+    line-height: 1.5;
+    max-height: 180px;
+    overflow-y: auto;
+  }
+  .jwt-header  { color: var(--red); }
+  .jwt-payload { color: var(--green); }
+  .jwt-sig     { color: var(--accent2); }
+
+  .payload-json {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.8rem;
+    white-space: pre-wrap;
+    line-height: 1.5;
+    max-height: 250px;
+    overflow-y: auto;
+  }
+
+  /* ── Claims table ───────────────────────────────────────────── */
+  .claims-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+  }
+  .claims-table th {
+    text-align: left;
+    padding: 0.4rem 0.6rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-dim);
+    font-weight: 600;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .claims-table td {
+    padding: 0.4rem 0.6rem;
+    border-bottom: 1px solid rgba(42,47,62,0.5);
+    font-family: var(--mono);
+    font-size: 0.75rem;
+  }
+  .claims-table td:first-child {
+    color: var(--cyan);
+    white-space: nowrap;
+  }
+  .claims-table td:last-child {
+    word-break: break-all;
+  }
+  .claim-oidc {
+    background: rgba(108,140,255,0.06);
+  }
+
+  /* ── Fragment params ────────────────────────────────────────── */
+  .params-list {
+    list-style: none;
+    padding: 0;
+  }
+  .params-list li {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    padding: 0.3rem 0;
+    border-bottom: 1px solid rgba(42,47,62,0.4);
+    display: flex;
+    gap: 0.5rem;
+  }
+  .params-list .param-key {
+    color: var(--cyan);
+    min-width: 120px;
+    flex-shrink: 0;
+  }
+  .params-list .param-val {
+    color: var(--text);
+    word-break: break-all;
+  }
+
+  /* ── Back link ──────────────────────────────────────────────── */
+  .back-link {
+    display: inline-block;
+    margin-top: 1rem;
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+  .back-link:hover { color: var(--accent2); }
+
+  footer {
+    text-align: center;
+    padding: 1.5rem 0;
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    border-top: 1px solid var(--border);
+    margin-top: 1rem;
+  }
+
+  /* ── Hidden ─────────────────────────────────────────────────── */
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>OIDC <span>Callback</span></h1>
+    <p>Implicit Flow redirect target: id_token received via URL fragment</p>
+    <span class="badge badge-oidc">OIDC Implicit Flow (response_type=id_token)</span>
+  </header>
+
+  <!-- Status -->
+  <div class="status-box status-waiting" id="statusBox">
+    Parsing URL fragment...
+  </div>
+
+  <!-- Fragment Params -->
+  <div class="card hidden" id="paramsCard">
+    <h3><span class="dot dot-blue"></span> Fragment Parameters</h3>
+    <ul class="params-list" id="paramsList"></ul>
+  </div>
+
+  <!-- JWT Token -->
+  <div class="card hidden" id="jwtCard">
+    <h3><span class="dot dot-green"></span> ID Token (JWT)</h3>
+    <div class="jwt-display" id="jwtDisplay"></div>
+  </div>
+
+  <!-- Decoded Payload -->
+  <div class="card hidden" id="payloadCard">
+    <h3><span class="dot dot-purple"></span> Decoded Payload</h3>
+    <div class="payload-json" id="payloadRaw"></div>
+  </div>
+
+  <!-- Claims breakdown -->
+  <div class="card hidden" id="claimsCard">
+    <h3><span class="dot dot-green"></span> Claims Breakdown</h3>
+    <table class="claims-table" id="claimsTable">
+      <thead>
+        <tr><th>Claim</th><th>Value</th><th>Description</th></tr>
+      </thead>
+      <tbody id="claimsBody"></tbody>
+    </table>
+  </div>
+
+  <a href="/" class="back-link">&larr; Back to main dashboard</a>
+
+  <footer>
+    moshi: OIDC Implicit Flow callback. Rust + FROST Ed25519
+  </footer>
+
+</div>
+
+<script>
+// ── Known claim descriptions ────────────────────────────────────────
+const CLAIM_INFO = {
+  iss:   'Issuer: who created this token',
+  sub:   'Subject: Direct Identifier (DI) for this user+app pair',
+  aud:   'Audience: the app this token is for (the blinded app_id, not the plaintext client_id)',
+  exp:   'Expiration: Unix timestamp after which the token is invalid',
+  iat:   'Issued At: Unix timestamp when the token was created',
+  nonce: 'Nonce: replay protection value provided by the Relying Party',
+  jti:   'JWT ID: unique identifier for this specific token',
+};
+
+// OIDC-specific claims (highlighted in the table)
+const OIDC_CLAIMS = new Set(['aud', 'nonce', 'jti']);
+
+// ── Parse fragment ──────────────────────────────────────────────────
+function parseFragment() {
+  const statusBox  = document.getElementById('statusBox');
+  const paramsCard = document.getElementById('paramsCard');
+  const paramsList = document.getElementById('paramsList');
+  const jwtCard    = document.getElementById('jwtCard');
+  const jwtDisplay = document.getElementById('jwtDisplay');
+  const payloadCard = document.getElementById('payloadCard');
+  const payloadRaw  = document.getElementById('payloadRaw');
+  const claimsCard  = document.getElementById('claimsCard');
+  const claimsBody  = document.getElementById('claimsBody');
+
+  const fragment = window.location.hash.substring(1);
+
+  if (!fragment) {
+    statusBox.className = 'status-box status-error';
+    statusBox.textContent = 'No fragment found in the URL. Expected #id_token=...';
+    return;
+  }
+
+  // Parse all fragment params
+  const params = {};
+  fragment.split('&').forEach(pair => {
+    const [key, ...rest] = pair.split('=');
+    params[decodeURIComponent(key)] = decodeURIComponent(rest.join('='));
+  });
+
+  // Show fragment parameters
+  paramsCard.classList.remove('hidden');
+  Object.entries(params).forEach(([key, val]) => {
+    const li = document.createElement('li');
+    const truncVal = key === 'id_token' && val.length > 80
+      ? val.substring(0, 80) + '...'
+      : val;
+    li.innerHTML = `<span class="param-key">${key}</span><span class="param-val">${truncVal}</span>`;
+    paramsList.appendChild(li);
+  });
+
+  const idToken = params['id_token'];
+
+  if (!idToken) {
+    statusBox.className = 'status-box status-error';
+    statusBox.textContent = 'Fragment present but no id_token parameter found.';
+    return;
+  }
+
+  // Show JWT with color-coded parts
+  jwtCard.classList.remove('hidden');
+  const parts = idToken.split('.');
+  if (parts.length === 3) {
+    jwtDisplay.innerHTML =
+      '<span class="jwt-header">' + parts[0] + '</span>.' +
+      '<span class="jwt-payload">' + parts[1] + '</span>.' +
+      '<span class="jwt-sig">' + parts[2] + '</span>';
+  } else {
+    jwtDisplay.textContent = idToken;
+  }
+
+  // Decode payload
+  try {
+    const payloadB64 = parts[1];
+    // base64url -> base64
+    const b64 = payloadB64.replace(/-/g, '+').replace(/_/g, '/');
+    const json = atob(b64);
+    const payload = JSON.parse(json);
+
+    // Show raw payload
+    payloadCard.classList.remove('hidden');
+    payloadRaw.textContent = JSON.stringify(payload, null, 2);
+
+    // Build claims table
+    claimsCard.classList.remove('hidden');
+    // Show known claims first, in order
+    const orderedKeys = ['iss', 'sub', 'aud', 'nonce', 'jti', 'iat', 'exp'];
+    const shown = new Set();
+
+    orderedKeys.forEach(key => {
+      if (payload[key] !== undefined) {
+        addClaimRow(claimsBody, key, payload[key], CLAIM_INFO[key] || '', OIDC_CLAIMS.has(key));
+        shown.add(key);
+      }
+    });
+
+    // Show any remaining claims
+    Object.keys(payload).forEach(key => {
+      if (!shown.has(key)) {
+        addClaimRow(claimsBody, key, payload[key], '', false);
+      }
+    });
+
+    // Success
+    statusBox.className = 'status-box status-success';
+    statusBox.textContent = 'id_token received and decoded successfully';
+
+  } catch (e) {
+    statusBox.className = 'status-box status-error';
+    statusBox.textContent = 'Failed to decode JWT payload: ' + e.message;
+  }
+}
+
+function addClaimRow(tbody, key, value, description, isOidc) {
+  const tr = document.createElement('tr');
+  if (isOidc) tr.classList.add('claim-oidc');
+
+  let displayVal = value;
+  // Format timestamps
+  if ((key === 'iat' || key === 'exp') && typeof value === 'number') {
+    const date = new Date(value * 1000);
+    displayVal = value + '  (' + date.toISOString() + ')';
+  }
+  // Truncate very long values
+  if (typeof displayVal === 'string' && displayVal.length > 100) {
+    displayVal = displayVal.substring(0, 100) + '...';
+  }
+
+  const oidcTag = isOidc ? ' <span style="color:var(--accent);font-size:0.65rem;">[OIDC]</span>' : '';
+
+  tr.innerHTML =
+    '<td>' + key + oidcTag + '</td>' +
+    '<td>' + displayVal + '</td>' +
+    '<td style="color:var(--text-dim);font-family:var(--sans);font-size:0.75rem;">' + description + '</td>';
+  tbody.appendChild(tr);
+}
+
+// ── Run on load ─────────────────────────────────────────────────────
+parseFragment();
+</script>
+</body>
+</html>
