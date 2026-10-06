@@ -30,6 +30,7 @@ must create them yourself. Both are git-ignored; never commit them.
 ```bash
 ./run.sh
 # open http://localhost:3000
+# open http://localhost:8080
 ```
 
 ```bash
